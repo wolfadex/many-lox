@@ -372,6 +372,30 @@ scanToken state =
                 '>' ->
                     addTokenWithMatch '=' GREATER_EQUAL GREATER
 
+                '/' ->
+                    let
+                        ( nState, isMatch ) =
+                            if isAtEnd nextState then
+                                ( nextState, False )
+
+                            else
+                                case String.uncons (String.dropLeft nextState.current nextState.source) of
+                                    Nothing ->
+                                        ( nextState, False )
+
+                                    Just ( char, _ ) ->
+                                        if char /= '/' then
+                                            ( nextState, False )
+
+                                        else
+                                            ( { nextState | current = nextState.current + 1 }, True )
+                    in
+                    if isMatch then
+                        ( eatComment nState, Ok Nothing )
+
+                    else
+                        addToken SLASH
+
                 ' ' ->
                     noToken
 
@@ -396,6 +420,19 @@ scanToken state =
                             }
                         )
                     )
+
+
+eatComment : TokenizerState -> TokenizerState
+eatComment state =
+    case String.uncons (String.dropLeft state.current state.source) of
+        Nothing ->
+            state
+
+        Just ( '\n', _ ) ->
+            { state | current = state.current + 1 }
+
+        Just _ ->
+            eatComment { state | current = state.current + 1 }
 
 
 type Error
