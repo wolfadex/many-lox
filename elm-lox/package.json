@@ -1,0 +1,9 @@
+{
+  "name": "elm-lox",
+  "scripts": {
+    "dev": "elm-cli run --debug src/Cli.elm"
+  },
+  "devDependencies": {
+    "@albertdahlin/elm-posix": "^1.1.0"
+  }
+}
