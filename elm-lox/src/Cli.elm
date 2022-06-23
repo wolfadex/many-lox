@@ -239,7 +239,7 @@ scanTokens source =
 
 scanTokensHelper : TokenizerState -> List Token -> List Error -> Result (List Error) (List Token)
 scanTokensHelper state tokens errors =
-    if state.current >= String.length state.source then
+    if isAtEnd state then
         case errors of
             [] ->
                 ({ type_ = EOF, lexeme = "", line = state.line } :: tokens)
@@ -290,6 +290,33 @@ scanToken state =
                                 nextState.source
                         }
                     )
+
+                addTokenWithMatch : Char -> TokenType -> TokenType -> ( TokenizerState, Result Error Token )
+                addTokenWithMatch toMatch matchType notMatchType =
+                    if isAtEnd nextState then
+                        addToken notMatchType
+
+                    else
+                        case String.uncons (String.dropLeft nextState.current nextState.source) of
+                            Nothing ->
+                                addToken notMatchType
+
+                            Just ( char, _ ) ->
+                                if char == toMatch then
+                                    ( { nextState | current = nextState.current + 1 }
+                                    , Ok
+                                        { type_ = matchType
+                                        , line = nextState.line
+                                        , lexeme =
+                                            String.slice
+                                                nextState.start
+                                                (nextState.current + 1)
+                                                nextState.source
+                                        }
+                                    )
+
+                                else
+                                    addToken notMatchType
             in
             case c of
                 '(' ->
@@ -321,6 +348,18 @@ scanToken state =
 
                 '*' ->
                     addToken STAR
+
+                '!' ->
+                    addTokenWithMatch '=' BANG_EQUAL BANG
+
+                '=' ->
+                    addTokenWithMatch '=' EQUAL_EQUAL EQUAL
+
+                '<' ->
+                    addTokenWithMatch '=' LESS_EQUAL LESS
+
+                '>' ->
+                    addTokenWithMatch '=' GREATER_EQUAL GREATER
 
                 unsupportedChar ->
                     ( nextState
@@ -362,3 +401,8 @@ repl =
     --                     |> IO.andThen (\() -> repl)
     --         )
     Debug.todo "Figure out repl error"
+
+
+isAtEnd : TokenizerState -> Bool
+isAtEnd state =
+    state.current >= String.length state.source
