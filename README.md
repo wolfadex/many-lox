@@ -12,18 +12,18 @@ I don't know if I will complete any of the implementations, but I want to attemp
 
 ### Tree-Walk Interpreter
 
-| Phase / Chapter        | Elm (elm-lox) | \<language 2> |
-| ---------------------- | ------------- | ------------- |
-| Scanning               | ✅            | \<status>     |
-| Representing Code      |               |               |
-| Parsing Expressions    |               |               |
-| Evaluating Expressions |               |               |
-| Statements and State   |               |               |
-| Control Flow           |               |               |
-| Functions              |               |               |
-| Resolving and Binding  |               |               |
-| Classes                |               |               |
-| Inheritance            |               |               |
+| Phase / Chapter        | Elm [(elm-lox)](./elm-lox/) | \<language 2> |
+| ---------------------- | --------------------------- | ------------- |
+| Scanning               | ✅                          | \<status>     |
+| Representing Code      |                             |               |
+| Parsing Expressions    |                             |               |
+| Evaluating Expressions |                             |               |
+| Statements and State   |                             |               |
+| Control Flow           |                             |               |
+| Functions              |                             |               |
+| Resolving and Binding  |                             |               |
+| Classes                |                             |               |
+| Inheritance            |                             |               |
 
 ### Bytecode Virtual Machine
 
