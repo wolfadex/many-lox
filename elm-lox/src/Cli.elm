@@ -254,11 +254,14 @@ scanTokensHelper state tokens errors =
             ( nextState, Err err ) ->
                 scanTokensHelper nextState tokens (err :: errors)
 
-            ( nextState, Ok token ) ->
+            ( nextState, Ok (Just token) ) ->
                 scanTokensHelper nextState (token :: tokens) errors
 
+            ( nextState, Ok Nothing ) ->
+                scanTokensHelper nextState tokens errors
 
-scanToken : TokenizerState -> ( TokenizerState, Result Error Token )
+
+scanToken : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
 scanToken state =
     let
         nextState =
@@ -277,21 +280,27 @@ scanToken state =
 
         Just ( c, _ ) ->
             let
-                addToken : TokenType -> ( TokenizerState, Result Error Token )
+                noToken : ( TokenizerState, Result Error (Maybe Token) )
+                noToken =
+                    ( nextState, Ok Nothing )
+
+                addToken : TokenType -> ( TokenizerState, Result Error (Maybe Token) )
                 addToken type_ =
                     ( nextState
                     , Ok
-                        { type_ = type_
-                        , line = nextState.line
-                        , lexeme =
-                            String.slice
-                                nextState.start
-                                nextState.current
-                                nextState.source
-                        }
+                        (Just
+                            { type_ = type_
+                            , line = nextState.line
+                            , lexeme =
+                                String.slice
+                                    nextState.start
+                                    nextState.current
+                                    nextState.source
+                            }
+                        )
                     )
 
-                addTokenWithMatch : Char -> TokenType -> TokenType -> ( TokenizerState, Result Error Token )
+                addTokenWithMatch : Char -> TokenType -> TokenType -> ( TokenizerState, Result Error (Maybe Token) )
                 addTokenWithMatch toMatch matchType notMatchType =
                     if isAtEnd nextState then
                         addToken notMatchType
@@ -305,14 +314,16 @@ scanToken state =
                                 if char == toMatch then
                                     ( { nextState | current = nextState.current + 1 }
                                     , Ok
-                                        { type_ = matchType
-                                        , line = nextState.line
-                                        , lexeme =
-                                            String.slice
-                                                nextState.start
-                                                (nextState.current + 1)
-                                                nextState.source
-                                        }
+                                        (Just
+                                            { type_ = matchType
+                                            , line = nextState.line
+                                            , lexeme =
+                                                String.slice
+                                                    nextState.start
+                                                    (nextState.current + 1)
+                                                    nextState.source
+                                            }
+                                        )
                                     )
 
                                 else
@@ -360,6 +371,21 @@ scanToken state =
 
                 '>' ->
                     addTokenWithMatch '=' GREATER_EQUAL GREATER
+
+                ' ' ->
+                    noToken
+
+                -- \r
+                '\u{000D}' ->
+                    noToken
+
+                '\t' ->
+                    noToken
+
+                '\n' ->
+                    ( { nextState | line = nextState.line + 1 }
+                    , Ok Nothing
+                    )
 
                 unsupportedChar ->
                     ( nextState
