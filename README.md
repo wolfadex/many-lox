@@ -14,7 +14,7 @@ I don't know if I will complete any of the implementations, but I want to attemp
 
 | Phase / Chapter        | Elm (elm-lox) | \<language 2> |
 | ---------------------- | ------------- | ------------- |
-| Scanning               | 🚧            | \<status>     |
+| Scanning               | ✅            | \<status>     |
 | Representing Code      |               |               |
 | Parsing Expressions    |               |               |
 | Evaluating Expressions |               |               |
