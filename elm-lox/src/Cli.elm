@@ -1,5 +1,6 @@
 module Cli exposing (program)
 
+import Dict exposing (Dict)
 import Posix.IO as IO exposing (IO, Process)
 import Posix.IO.File as File
 import Posix.IO.Process as Process
@@ -59,7 +60,7 @@ type TokenType
     | LESS
     | LESS_EQUAL
     | -- Literals.
-      IDENTIFIER
+      IDENTIFIER String
     | STRING String
     | NUMBER Float
     | -- Keywords.
@@ -142,8 +143,8 @@ tokenTypeToString tokenType =
         LESS_EQUAL ->
             ( "LESS_EQUAL", Nothing )
 
-        IDENTIFIER ->
-            ( "IDENTIFIER", Nothing )
+        IDENTIFIER literal ->
+            ( "IDENTIFIER", Just literal )
 
         STRING literal ->
             ( "STRING", Just literal )
@@ -422,6 +423,9 @@ scanToken state =
                     if Char.isDigit c then
                         tokenizeNumber nextState
 
+                    else if Char.isAlpha c then
+                        tokenizeIdentifier nextState
+
                     else
                         ( nextState
                         , Err
@@ -431,6 +435,84 @@ scanToken state =
                                 }
                             )
                         )
+
+
+tokenizeIdentifier : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
+tokenizeIdentifier state =
+    case String.uncons (String.dropLeft state.current state.source) of
+        Nothing ->
+            let
+                text =
+                    String.slice
+                        state.start
+                        state.current
+                        state.source
+            in
+            ( { state | current = state.current + 1 }
+            , Ok
+                (Just
+                    { line = state.line
+                    , type_ =
+                        case Dict.get text keywordTokens of
+                            Nothing ->
+                                IDENTIFIER text
+
+                            Just tokenType ->
+                                tokenType
+                    , lexeme = text
+                    }
+                )
+            )
+
+        Just ( char, _ ) ->
+            if Char.isAlphaNum char || char == '_' then
+                tokenizeIdentifier { state | current = state.current + 1 }
+
+            else
+                let
+                    text =
+                        String.slice
+                            state.start
+                            state.current
+                            state.source
+                in
+                ( { state | current = state.current + 1 }
+                , Ok
+                    (Just
+                        { line = state.line
+                        , type_ =
+                            case Dict.get text keywordTokens of
+                                Nothing ->
+                                    IDENTIFIER text
+
+                                Just tokenType ->
+                                    tokenType
+                        , lexeme = text
+                        }
+                    )
+                )
+
+
+keywordTokens : Dict String TokenType
+keywordTokens =
+    Dict.fromList
+        [ ( "and", AND )
+        , ( "class", CLASS )
+        , ( "else", ELSE )
+        , ( "false", FALSE )
+        , ( "for", FOR )
+        , ( "fun", FUN )
+        , ( "if", IF )
+        , ( "nil", NIL )
+        , ( "or", OR )
+        , ( "print", PRINT )
+        , ( "return", RETURN )
+        , ( "super", SUPER )
+        , ( "this", THIS )
+        , ( "true", TRUE )
+        , ( "var", VAR )
+        , ( "while", WHILE )
+        ]
 
 
 tokenizeNumber : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
