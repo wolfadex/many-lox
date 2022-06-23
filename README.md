@@ -28,3 +28,15 @@ I don't know if I will complete any of the implementations, but I want to attemp
 ### Bytecode Virtual Machine
 
 TBD
+
+## Notes
+
+When implementing the Scanner, use the `scanner_*.lox` files in the order:
+
+1. `scanner_minimal.lox`
+1. `scanner_with_operators.lox`
+1. `scanner_with_whitespace.lox`
+1. `scanner_with_comments.lox`
+1. `scanner_with_strings.lox`
+1. `scanner_with_numbers.lox`
+1. `scanner_with_identifiers.lox`
