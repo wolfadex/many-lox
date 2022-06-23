@@ -14,8 +14,22 @@ program process =
                 |> IO.andThen (Debug.todo "runFile")
 
         [ _ ] ->
-            Debug.todo "runPrompt"
+            repl
 
         _ ->
-            Process.logErr ("Usage: elm-lox <file>\n")
+            Process.logErr "Usage: elm-lox <file>\n"
                 |> IO.andThen (\() -> Process.exit 64)
+
+
+repl =
+    -- Process.print ">"
+    --     |> IO.andThen (\() -> File.read File.stdIn)
+    --     |> IO.andThen
+    --         (\input ->
+    --             if String.isEmpty input then
+    --                 Process.print "Exiting"
+    --             else
+    --                 Process.print input
+    --                     |> IO.andThen (\() -> repl)
+    --         )
+    Debug.todo "Figure out repl error"
