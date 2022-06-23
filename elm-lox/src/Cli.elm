@@ -60,7 +60,7 @@ type TokenType
     | LESS_EQUAL
     | -- Literals.
       IDENTIFIER
-    | STRING
+    | STRING String
     | NUMBER
     | -- Keywords.
       AND
@@ -82,146 +82,150 @@ type TokenType
     | EOF
 
 
-tokenTypeToString : TokenType -> String
+tokenTypeToString : TokenType -> ( String, Maybe String )
 tokenTypeToString tokenType =
     case tokenType of
         LEFT_PAREN ->
-            "LEFT_PAREN"
+            ( "LEFT_PAREN", Nothing )
 
         RIGHT_PAREN ->
-            "RIGHT_PAREN"
+            ( "RIGHT_PAREN", Nothing )
 
         LEFT_BRACE ->
-            "LEFT_BRACE"
+            ( "LEFT_BRACE", Nothing )
 
         RIGHT_BRACE ->
-            "RIGHT_BRACE"
+            ( "RIGHT_BRACE", Nothing )
 
         COMMA ->
-            "COMMA"
+            ( "COMMA", Nothing )
 
         DOT ->
-            "DOT"
+            ( "DOT", Nothing )
 
         MINUS ->
-            "MINUS"
+            ( "MINUS", Nothing )
 
         PLUS ->
-            "PLUS"
+            ( "PLUS", Nothing )
 
         SEMICOLON ->
-            "SEMICOLON"
+            ( "SEMICOLON", Nothing )
 
         SLASH ->
-            "SLASH"
+            ( "SLASH", Nothing )
 
         STAR ->
-            "STAR"
+            ( "STAR", Nothing )
 
         BANG ->
-            "BANG"
+            ( "BANG", Nothing )
 
         BANG_EQUAL ->
-            "BANG_EQUAL"
+            ( "BANG_EQUAL", Nothing )
 
         EQUAL ->
-            "EQUAL"
+            ( "EQUAL", Nothing )
 
         EQUAL_EQUAL ->
-            "EQUAL_EQUAL"
+            ( "EQUAL_EQUAL", Nothing )
 
         GREATER ->
-            "GREATER"
+            ( "GREATER", Nothing )
 
         GREATER_EQUAL ->
-            "GREATER_EQUAL"
+            ( "GREATER_EQUAL", Nothing )
 
         LESS ->
-            "LESS"
+            ( "LESS", Nothing )
 
         LESS_EQUAL ->
-            "LESS_EQUAL"
+            ( "LESS_EQUAL", Nothing )
 
         IDENTIFIER ->
-            "IDENTIFIER"
+            ( "IDENTIFIER", Nothing )
 
-        STRING ->
-            "STRING"
+        STRING literal ->
+            ( "STRING", Just literal )
 
         NUMBER ->
-            "NUMBER"
+            ( "NUMBER", Nothing )
 
         AND ->
-            "AND"
+            ( "AND", Nothing )
 
         CLASS ->
-            "CLASS"
+            ( "CLASS", Nothing )
 
         ELSE ->
-            "ELSE"
+            ( "ELSE", Nothing )
 
         FALSE ->
-            "FALSE"
+            ( "FALSE", Nothing )
 
         FUN ->
-            "FUN"
+            ( "FUN", Nothing )
 
         FOR ->
-            "FOR"
+            ( "FOR", Nothing )
 
         IF ->
-            "IF"
+            ( "IF", Nothing )
 
         NIL ->
-            "NIL"
+            ( "NIL", Nothing )
 
         OR ->
-            "OR"
+            ( "OR", Nothing )
 
         PRINT ->
-            "PRINT"
+            ( "PRINT", Nothing )
 
         RETURN ->
-            "RETURN"
+            ( "RETURN", Nothing )
 
         SUPER ->
-            "SUPER"
+            ( "SUPER", Nothing )
 
         THIS ->
-            "THIS"
+            ( "THIS", Nothing )
 
         TRUE ->
-            "TRUE"
+            ( "TRUE", Nothing )
 
         VAR ->
-            "VAR"
+            ( "VAR", Nothing )
 
         WHILE ->
-            "WHILE"
+            ( "WHILE", Nothing )
 
         EOF ->
-            "EOF"
+            ( "EOF", Nothing )
 
 
 type alias Token =
     { type_ : TokenType
     , lexeme : String
-
-    -- , literal : Object -- This doesn't make sense in Elm, what do???
     , line : Int
     }
 
 
 tokenToString : Token -> String
 tokenToString token =
-    tokenTypeToString token.type_
+    let
+        ( type_, literal ) =
+            tokenTypeToString token.type_
+    in
+    type_
         ++ " "
         ++ token.lexeme
+        ++ (case literal of
+                Nothing ->
+                    ""
 
-
-
--- ++ " "
--- ++ token.literal
+                Just lit ->
+                    " " ++ lit
+           )
 
 
 type alias TokenizerState =
@@ -411,6 +415,9 @@ scanToken state =
                     , Ok Nothing
                     )
 
+                '"' ->
+                    tokenizeString nextState
+
                 unsupportedChar ->
                     ( nextState
                     , Err
@@ -420,6 +427,40 @@ scanToken state =
                             }
                         )
                     )
+
+
+tokenizeString : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
+tokenizeString state =
+    case String.uncons (String.dropLeft state.current state.source) of
+        Nothing ->
+            ( state, Err (error { line = state.line, message = "Unterminated string" }) )
+
+        Just ( '\n', _ ) ->
+            tokenizeString { state | current = state.current + 1, line = state.line + 1 }
+
+        Just ( '"', _ ) ->
+            ( { state | current = state.current + 1 }
+            , Ok
+                (Just
+                    { line = state.line
+                    , type_ =
+                        STRING
+                            (String.slice
+                                (state.start + 1)
+                                state.current
+                                state.source
+                            )
+                    , lexeme =
+                        String.slice
+                            state.start
+                            (state.current + 1)
+                            state.source
+                    }
+                )
+            )
+
+        Just _ ->
+            tokenizeString { state | current = state.current + 1 }
 
 
 eatComment : TokenizerState -> TokenizerState
