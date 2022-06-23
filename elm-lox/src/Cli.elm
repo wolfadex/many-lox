@@ -61,7 +61,7 @@ type TokenType
     | -- Literals.
       IDENTIFIER
     | STRING String
-    | NUMBER
+    | NUMBER Float
     | -- Keywords.
       AND
     | CLASS
@@ -148,8 +148,8 @@ tokenTypeToString tokenType =
         STRING literal ->
             ( "STRING", Just literal )
 
-        NUMBER ->
-            ( "NUMBER", Nothing )
+        NUMBER num ->
+            ( "NUMBER", Just (String.fromFloat num) )
 
         AND ->
             ( "AND", Nothing )
@@ -418,15 +418,160 @@ scanToken state =
                 '"' ->
                     tokenizeString nextState
 
-                unsupportedChar ->
-                    ( nextState
-                    , Err
-                        (error
+                _ ->
+                    if Char.isDigit c then
+                        tokenizeNumber nextState
+
+                    else
+                        ( nextState
+                        , Err
+                            (error
+                                { line = state.line
+                                , message = "Unsupported character: " ++ String.fromChar c
+                                }
+                            )
+                        )
+
+
+tokenizeNumber : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
+tokenizeNumber state =
+    case String.uncons (String.dropLeft state.current state.source) of
+        Nothing ->
+            ( { state | current = state.current + 1 }
+            , case
+                String.toFloat
+                    (String.slice
+                        state.start
+                        (state.current + 1)
+                        state.source
+                    )
+              of
+                Nothing ->
+                    Err (error { line = state.line, message = "Unexpectedly unable to parse number" })
+
+                Just num ->
+                    Ok
+                        (Just
                             { line = state.line
-                            , message = "Unsupported character: " ++ String.fromChar unsupportedChar
+                            , type_ = NUMBER num
+                            , lexeme = String.fromFloat num
                             }
                         )
+            )
+
+        Just ( '.', rest ) ->
+            case String.uncons rest of
+                Nothing ->
+                    ( { state | current = state.current + 1 }
+                    , Err (error { line = state.line, message = "Unexpected period after number at EOF" })
                     )
+
+                Just ( c, _ ) ->
+                    if Char.isDigit c then
+                        let
+                            tokenizeFloat s =
+                                case String.uncons (String.dropLeft s.current s.source) of
+                                    Nothing ->
+                                        ( { s | current = s.current + 1 }
+                                        , case
+                                            String.toFloat
+                                                (String.slice
+                                                    s.start
+                                                    (s.current + 1)
+                                                    s.source
+                                                )
+                                          of
+                                            Nothing ->
+                                                Err (error { line = s.line, message = "Unexpectedly unable to parse number" })
+
+                                            Just num ->
+                                                Ok
+                                                    (Just
+                                                        { line = s.line
+                                                        , type_ = NUMBER num
+                                                        , lexeme = String.fromFloat num
+                                                        }
+                                                    )
+                                        )
+
+                                    Just ( char, _ ) ->
+                                        if Char.isDigit char then
+                                            tokenizeNumber { s | current = s.current + 1 }
+
+                                        else
+                                            ( { s | current = s.current + 1 }
+                                            , case
+                                                String.toFloat
+                                                    (String.slice
+                                                        s.start
+                                                        (s.current + 1)
+                                                        s.source
+                                                    )
+                                              of
+                                                Nothing ->
+                                                    Err (error { line = s.line, message = "Unexpectedly unable to parse number" })
+
+                                                Just num ->
+                                                    Ok
+                                                        (Just
+                                                            { line = s.line
+                                                            , type_ = NUMBER num
+                                                            , lexeme = String.fromFloat num
+                                                            }
+                                                        )
+                                            )
+                        in
+                        tokenizeFloat { state | current = state.current + 1 }
+
+                    else
+                        ( { state | current = state.current }
+                        , case
+                            String.toFloat
+                                (String.slice
+                                    state.start
+                                    state.current
+                                    state.source
+                                )
+                          of
+                            Nothing ->
+                                Err (error { line = state.line, message = "Unexpectedly unable to parse float" })
+
+                            Just num ->
+                                Ok
+                                    (Just
+                                        { line = state.line
+                                        , type_ = NUMBER num
+                                        , lexeme = String.fromFloat num
+                                        }
+                                    )
+                        )
+
+        Just ( char, _ ) ->
+            if Char.isDigit char then
+                tokenizeNumber { state | current = state.current + 1 }
+
+            else
+                ( { state | current = state.current }
+                , case
+                    String.toFloat
+                        (String.slice
+                            state.start
+                            state.current
+                            state.source
+                        )
+                  of
+                    Nothing ->
+                        Err (error { line = state.line, message = "Unexpectedly unable to parse integer" })
+
+                    Just num ->
+                        Ok
+                            (Just
+                                { line = state.line
+                                , type_ = NUMBER num
+                                , lexeme = String.fromFloat num
+                                }
+                            )
+                )
 
 
 tokenizeString : TokenizerState -> ( TokenizerState, Result Error (Maybe Token) )
