@@ -11,7 +11,11 @@ program process =
         [ _, filename ] ->
             File.contentsOf filename
                 |> IO.exitOnError identity
-                |> IO.andThen (Process.print)
+                |> IO.andThen (Debug.todo "runFile")
+
+        [ _ ] ->
+            Debug.todo "runPrompt"
 
         _ ->
             Process.logErr ("Usage: elm-lox <file>\n")
+                |> IO.andThen (\() -> Process.exit 64)
