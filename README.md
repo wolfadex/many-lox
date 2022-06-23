@@ -12,9 +12,9 @@ I don't know if I will complete any of the implementations, but I want to attemp
 
 ### Tree-Walk Interpreter
 
-| Phase / Chapter        | \<language 1> | \<language 2> |
+| Phase / Chapter        | Elm (elm-lox) | \<language 2> |
 | ---------------------- | ------------- | ------------- |
-| Scanning               | \<status>     | \<status>     |
+| Scanning               | 🚧            | \<status>     |
 | Representing Code      |               |               |
 | Parsing Expressions    |               |               |
 | Evaluating Expressions |               |               |
