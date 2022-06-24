@@ -4,6 +4,8 @@ module Main where
 
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.Map.Strict as Map
+import Data.Map.Strict (Map)
 import qualified System.Environment
 import qualified System.Exit
 import System.Exit (ExitCode(..))
@@ -266,8 +268,8 @@ scanToken state =
     c:_ ->
       if Char.isDigit c then
         tokenizeNumber nextState
-      -- else if Char.isAlpha c then
-      --   tokenizeIdentifier nextState
+      else if Char.isAlpha c then
+        tokenizeIdentifier nextState
       else
         ( nextState
         , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
@@ -284,6 +286,63 @@ scanToken state =
                   , tokLexeme = lexeme
                   }      
       )
+
+
+tokenizeIdentifier :: TokenizerState -> ( TokenizerState, Eight Error (Maybe Token) )
+tokenizeIdentifier state =
+    case drop (stateCurrent state) (stateSource state) of
+      [] ->
+        let text = slice (stateStart state) (stateCurrent state) (stateSource state)
+        in
+          ( state { stateCurrent = stateCurrent state + 1 }
+          , Right $ Just $ Token
+              { tokLine = stateLine state
+              , tokType =
+                case Map.lookup text keywordTokens of
+                  Nothing -> IDENTIFIER text
+                  Just tokenType -> tokenType
+              , tokLexeme = text
+              }
+          )
+
+      char:_ ->
+        if Char.isAlphaNum char || char == '_' then
+          tokenizeIdentifier $ state { stateCurrent = stateCurrent state + 1 }
+        else
+          let text = slice (stateStart state) (stateCurrent state) (stateSource state)
+          in
+            ( state { stateCurrent = stateCurrent state + 1 }
+            , Right $ Just $ Token
+                { tokLine = stateLine state
+                , tokType =
+                  case Map.lookup text keywordTokens of
+                    Nothing -> IDENTIFIER text
+                    Just tokenType -> tokenType
+                , tokLexeme = text
+                }
+            )
+
+
+keywordTokens : Map String TokenType
+keywordTokens =
+    Map.fromList
+        [ ( "and", AND )
+        , ( "class", CLASS )
+        , ( "else", ELSE )
+        , ( "false", FALSE )
+        , ( "for", FOR )
+        , ( "fun", FUN )
+        , ( "if", IF )
+        , ( "nil", NIL )
+        , ( "or", OR )
+        , ( "print", PRINT )
+        , ( "return", RETURN )
+        , ( "super", SUPER )
+        , ( "this", THIS )
+        , ( "true", TRUE )
+        , ( "var", VAR )
+        , ( "while", WHILE )
+        ]
 
 
 tokenizeNumber :: TokenizerState -> ( TokenizerState, Either Error (Maybe Token) )
