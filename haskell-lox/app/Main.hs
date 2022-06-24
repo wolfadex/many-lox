@@ -2,11 +2,13 @@
 
 module Main where
 
+import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified System.Environment
 import qualified System.Exit
 import System.Exit (ExitCode(..))
 import qualified System.IO
+import qualified Text.Read
 
 main :: IO ()
 main = do
@@ -262,9 +264,14 @@ scanToken state =
     '"':_ -> tokenizeString nextState
     -- Everything else
     c:_ ->
-      ( nextState
-      , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
-      )
+      if Char.isDigit c then
+        tokenizeNumber nextState
+      -- else if Char.isAlpha c then
+      --   tokenizeIdentifier nextState
+      else
+        ( nextState
+        , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
+        )
   where
     nextState = state { stateCurrent = stateCurrent state + 1 }
     noToken = ( nextState, Right Nothing )
@@ -277,6 +284,88 @@ scanToken state =
                   , tokLexeme = lexeme
                   }      
       )
+
+
+tokenizeNumber :: TokenizerState -> ( TokenizerState, Either Error (Maybe Token) )
+tokenizeNumber state =
+  case drop (stateCurrent state) (stateSource state) of
+    [] ->
+      ( state { stateCurrent = stateCurrent state + 1 }
+      , let val = slice (stateStart state) (stateCurrent state + 1) (stateSource state)
+        in
+        case Text.Read.readMaybe val :: Maybe Float of
+          Nothing -> Left $ loxError (stateLine state) ("Unexpectedly unable to parse number")
+          Just num ->
+            Right $
+              Just $
+                Token
+                  { tokLine = stateLine state
+                  , tokType = NUMBER num
+                  , tokLexeme = val
+                  }
+      )
+    '.':[] ->
+      ( state { stateCurrent = stateCurrent state + 1 }
+      , Left $ loxError (stateLine state) ("Unexpected period after number at EOF")
+      )
+
+    '.':_ ->
+      tokenizeFloat $ state { stateCurrent = stateCurrent state + 1 }
+      where
+       tokenizeFloat s =
+        case drop (stateCurrent s) (stateSource s) of
+          [] ->
+            ( s { stateCurrent = stateCurrent s + 1 }
+            , let val = slice (stateStart s) (stateCurrent s) (stateSource s)
+              in
+              case Text.Read.readMaybe val :: Maybe Float of
+                Nothing -> Left $ loxError (stateLine s) ("Unexpectedly unable to parse float")
+                Just num ->
+                  Right $
+                    Just $
+                      Token
+                        { tokLine = stateLine s
+                        , tokType = NUMBER num
+                        , tokLexeme = val
+                        }
+            )
+
+          char:_ ->
+            if Char.isDigit char then
+                tokenizeFloat $ s { stateCurrent = stateCurrent s + 1 }
+            else
+                ( s { stateCurrent = stateCurrent s + 1 }
+                , let val = slice (stateStart s) (stateCurrent s) (stateSource s)
+                  in
+                  case Text.Read.readMaybe val :: Maybe Float of
+                    Nothing -> Left $ loxError (stateLine s) ("Unexpectedly unable to parse float")
+                    Just num ->
+                      Right $
+                        Just $
+                          Token
+                            { tokLine = stateLine s
+                            , tokType = NUMBER num
+                            , tokLexeme = val
+                            }
+                )
+    char:_ ->
+      if Char.isDigit char then
+        tokenizeNumber $ state { stateCurrent = stateCurrent state + 1 }
+      else
+        ( state
+        , let val = slice (stateStart state) (stateCurrent state) (stateSource state)
+          in
+          case Text.Read.readMaybe val :: Maybe Float of
+            Nothing -> Left $ loxError (stateLine state) ("Unexpectedly unable to parse integer")
+            Just num ->
+              Right $
+                Just $
+                  Token
+                    { tokLine = stateLine state
+                    , tokType = NUMBER num
+                    , tokLexeme = val
+                    }
+        )
 
 
 tokenizeString :: TokenizerState -> ( TokenizerState, Either Error (Maybe Token) )
