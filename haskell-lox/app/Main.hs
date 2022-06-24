@@ -1,8 +1,11 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Main where
 
+import qualified Data.List as List
+import qualified System.Environment
 import qualified System.Exit
 import System.Exit (ExitCode(..))
-import qualified System.Environment
 import qualified System.IO
 
 main :: IO ()
@@ -30,14 +33,51 @@ repl = do
   input <- getLine
   if input == "" then
     pure ()
-  else
-    -- run input
+  else do
+    run input
     repl
 
 
 runFile :: FilePath -> IO ()
 runFile filepath = do
   contents <- System.IO.readFile filepath
-  -- run contents
-  putStrLn contents
+  run contents
   
+
+run :: String -> IO ()
+run source =
+  case scanTokens source of
+    Left errs ->
+      putStrLn $ List.intercalate "\n" $ fmap errorToString errs
+
+    Right tokens ->
+      putStrLn $ List.intercalate "\n" $ fmap tokenToString tokens
+
+
+data Error = Error
+  { errLine :: Int
+  , errMessage :: String
+  }
+
+
+error :: Int -> String -> Error
+error line message =
+    Error {errLine = line, errMessage = message}
+    
+
+errorToString :: Error -> String
+errorToString err =
+  "[line " <> (show $ errLine err) <> "] Error: " <> errMessage err
+
+
+data Token = Token String
+
+
+tokenToString :: Token -> String
+tokenToString (Token token) =
+  token
+
+
+scanTokens :: String -> Either [Error] [Token]
+scanTokens source =
+    Right [Token source]
