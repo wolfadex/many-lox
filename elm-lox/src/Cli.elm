@@ -559,7 +559,7 @@ tokenizeNumber state =
                                             String.toFloat
                                                 (String.slice
                                                     s.start
-                                                    (s.current + 1)
+                                                    s.current
                                                     s.source
                                                 )
                                           of
@@ -578,7 +578,7 @@ tokenizeNumber state =
 
                                     Just ( char, _ ) ->
                                         if Char.isDigit char then
-                                            tokenizeNumber { s | current = s.current + 1 }
+                                            tokenizeFloat { s | current = s.current + 1 }
 
                                         else
                                             ( { s | current = s.current + 1 }
@@ -586,7 +586,7 @@ tokenizeNumber state =
                                                 String.toFloat
                                                     (String.slice
                                                         s.start
-                                                        (s.current + 1)
+                                                        s.current
                                                         s.source
                                                     )
                                               of
@@ -633,7 +633,7 @@ tokenizeNumber state =
                 tokenizeNumber { state | current = state.current + 1 }
 
             else
-                ( { state | current = state.current }
+                ( state
                 , case
                     String.toFloat
                         (String.slice
