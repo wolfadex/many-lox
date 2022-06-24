@@ -20,12 +20,24 @@ main = do
 
 
 runPrompt :: IO ()
-runPrompt =
-  undefined
+runPrompt = do
+  System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
+  repl
+
+repl :: IO ()
+repl = do
+  putStr "> "
+  input <- getLine
+  if input == "" then
+    pure ()
+  else
+    -- run input
+    repl
 
 
 runFile :: FilePath -> IO ()
 runFile filepath = do
   contents <- System.IO.readFile filepath
+  -- run contents
   putStrLn contents
   
