@@ -14,7 +14,7 @@ I don't know if I will complete any of the implementations, but I want to attemp
 
 | Phase / Chapter        | Elm ([elm-lox](./elm-lox/))                    | Haskell ([haskell-lox](./haskell-lox)) |
 | ---------------------- | ---------------------------------------------- | -------------------------------------- |
-| Scanning               | ✅ https://www.youtube.com/watch?v=dA10oUBGk0A | 🚧                                     |
+| Scanning               | ✅ https://www.youtube.com/watch?v=dA10oUBGk0A | ✅ (YouTube link coming soon)          |
 | Representing Code      |                                                |                                        |
 | Parsing Expressions    |                                                |                                        |
 | Evaluating Expressions |                                                |                                        |
