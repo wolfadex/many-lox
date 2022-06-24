@@ -12,18 +12,20 @@ I don't know if I will complete any of the implementations, but I want to attemp
 
 ### Tree-Walk Interpreter
 
-| Phase / Chapter        | Elm ([elm-lox](./elm-lox/))                    | Haskell ([haskell-lox](./haskell-lox)) |
-| ---------------------- | ---------------------------------------------- | -------------------------------------- |
-| Scanning               | ✅ https://www.youtube.com/watch?v=dA10oUBGk0A | ✅ (YouTube link coming soon)          |
-| Representing Code      |                                                |                                        |
-| Parsing Expressions    |                                                |                                        |
-| Evaluating Expressions |                                                |                                        |
-| Statements and State   |                                                |                                        |
-| Control Flow           |                                                |                                        |
-| Functions              |                                                |                                        |
-| Resolving and Binding  |                                                |                                        |
-| Classes                |                                                |                                        |
-| Inheritance            |                                                |                                        |
+Full recoded [playlist on YouTube](https://www.youtube.com/playlist?list=PLE5w5BWqFa7DtnvSt3luu92YYWQxkMLrp).
+
+| Phase / Chapter        | Elm ([elm-lox](./elm-lox/))                    | Haskell ([haskell-lox](./haskell-lox))         |
+| ---------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| Scanning               | ✅ https://www.youtube.com/watch?v=dA10oUBGk0A | ✅ https://www.youtube.com/watch?v=ZVCcKUmwEtI |
+| Representing Code      |                                                |                                                |
+| Parsing Expressions    |                                                |                                                |
+| Evaluating Expressions |                                                |                                                |
+| Statements and State   |                                                |                                                |
+| Control Flow           |                                                |                                                |
+| Functions              |                                                |                                                |
+| Resolving and Binding  |                                                |                                                |
+| Classes                |                                                |                                                |
+| Inheritance            |                                                |                                                |
 
 ### Bytecode Virtual Machine
 
