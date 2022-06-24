@@ -251,6 +251,8 @@ scanToken state =
     '>':'=':_ -> addToken GREATER_EQUAL ">="
     '>':_ -> addToken GREATER ">"
     -- Comments
+    '/':'/':_ -> ( eatComment nextState, Right Nothing )
+    '/':_ -> addToken SLASH "/"
     -- Whitespace
     ' ':_ -> noToken
     '\r':_ -> noToken
@@ -273,6 +275,14 @@ scanToken state =
                   , tokLexeme = lexeme
                   }      
       )
+
+
+eatComment :: TokenizerState -> TokenizerState
+eatComment state =
+  case drop (stateCurrent state) (stateSource state) of
+    [] -> state
+    '\n':_ -> state { stateCurrent = stateCurrent state + 1 }
+    _ -> eatComment $ state { stateCurrent = stateCurrent state + 1 }
 
 
 slice :: Int -> Int -> [a] -> [a]
