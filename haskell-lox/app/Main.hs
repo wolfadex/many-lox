@@ -230,34 +230,38 @@ scanToken state =
             (stateLine state)
             ("Expected to find a char at " <> show (stateCurrent state) <> " index but found nothing.")  
       )
-    
-    '(':_ -> addToken LEFT_PAREN
-    ')':_ -> addToken RIGHT_PAREN
-    '{':_ -> addToken LEFT_BRACE
-    '}':_ -> addToken RIGHT_BRACE
-    ',':_ -> addToken COMMA
-    '.':_ -> addToken DOT
-    '-':_ -> addToken MINUS
-    '+':_ -> addToken PLUS
-    ';':_ -> addToken SEMICOLON
-    '*':_ -> addToken STAR
+
+    '(':_ -> addToken LEFT_PAREN "("
+    ')':_ -> addToken RIGHT_PAREN ")"
+    '{':_ -> addToken LEFT_BRACE "{"
+    '}':_ -> addToken RIGHT_BRACE "}"
+    ',':_ -> addToken COMMA ","
+    '.':_ -> addToken DOT "."
+    '-':_ -> addToken MINUS "-"
+    '+':_ -> addToken PLUS "+"
+    ';':_ -> addToken SEMICOLON ";"
+    '*':_ -> addToken STAR "*"
+    '!':'=':_ -> addToken BANG_EQUAL "!="
+    '!':_ -> addToken BANG "!"
+    '=':'=':_ -> addToken EQUAL_EQUAL "=="
+    '=':_ -> addToken EQUAL "="
+    '<':'=':_ -> addToken LESS_EQUAL "<="
+    '<':_ -> addToken LESS "<"
+    '>':'=':_ -> addToken GREATER_EQUAL ">="
+    '>':_ -> addToken GREATER ">"
     c:_ ->
       ( nextState
       , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
       )
   where
     nextState = state { stateCurrent = stateCurrent state + 1 }
-    addToken type_ =
+    addToken type_ lexeme =
       ( nextState
       , Right $
           Just $
             Token { tokType = type_
                   , tokLine = stateLine nextState
-                  , tokLexeme =
-                    slice
-                      (stateStart nextState)
-                      (stateCurrent nextState)
-                      (stateSource nextState)
+                  , tokLexeme = lexeme
                   }      
       )
 
