@@ -230,7 +230,7 @@ scanToken state =
             (stateLine state)
             ("Expected to find a char at " <> show (stateCurrent state) <> " index but found nothing.")  
       )
-
+    -- Basic tokens
     '(':_ -> addToken LEFT_PAREN "("
     ')':_ -> addToken RIGHT_PAREN ")"
     '{':_ -> addToken LEFT_BRACE "{"
@@ -241,6 +241,7 @@ scanToken state =
     '+':_ -> addToken PLUS "+"
     ';':_ -> addToken SEMICOLON ";"
     '*':_ -> addToken STAR "*"
+    -- Operators
     '!':'=':_ -> addToken BANG_EQUAL "!="
     '!':_ -> addToken BANG "!"
     '=':'=':_ -> addToken EQUAL_EQUAL "=="
@@ -249,12 +250,20 @@ scanToken state =
     '<':_ -> addToken LESS "<"
     '>':'=':_ -> addToken GREATER_EQUAL ">="
     '>':_ -> addToken GREATER ">"
+    -- Comments
+    -- Whitespace
+    ' ':_ -> noToken
+    '\r':_ -> noToken
+    '\t':_ -> noToken
+    '\n':_ -> ( nextState { stateLine = stateLine nextState + 1 }, Right Nothing )
+    -- Everything else
     c:_ ->
       ( nextState
       , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
       )
   where
     nextState = state { stateCurrent = stateCurrent state + 1 }
+    noToken = ( nextState, Right Nothing )
     addToken type_ lexeme =
       ( nextState
       , Right $
