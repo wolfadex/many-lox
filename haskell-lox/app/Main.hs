@@ -241,6 +241,10 @@ scanToken state =
     '+':_ -> addToken PLUS
     ';':_ -> addToken SEMICOLON
     '*':_ -> addToken STAR
+    c:_ ->
+      ( nextState
+      , Left $ loxError (stateLine state) ("Unsupported character: " <> show c)
+      )
   where
     nextState = state { stateCurrent = stateCurrent state + 1 }
     addToken type_ =
