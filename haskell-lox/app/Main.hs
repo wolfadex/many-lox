@@ -258,6 +258,8 @@ scanToken state =
     '\r':_ -> noToken
     '\t':_ -> noToken
     '\n':_ -> ( nextState { stateLine = stateLine nextState + 1 }, Right Nothing )
+    -- String literals
+    '"':_ -> tokenizeString nextState
     -- Everything else
     c:_ ->
       ( nextState
@@ -275,6 +277,35 @@ scanToken state =
                   , tokLexeme = lexeme
                   }      
       )
+
+
+tokenizeString :: TokenizerState -> ( TokenizerState, Either Error (Maybe Token) )
+tokenizeString state =
+  case drop (stateCurrent state) (stateSource state) of
+    [] -> ( state, Left $ loxError (stateLine state) ("Unterminated string") )
+    '\n':_ -> tokenizeString $ state { stateCurrent = stateCurrent state + 1, stateLine = stateLine state + 1 }
+    '"':_ ->
+      ( state { stateCurrent = stateCurrent state + 1 }
+        , Right $
+            Just $
+              Token
+                { tokLine = stateLine state
+                , tokType =
+                  STRING
+                    (slice
+                      (stateStart state + 1)
+                      (stateCurrent state)
+                      (stateSource state)
+                    )
+                , tokLexeme =
+                    (slice
+                      (stateStart state )
+                      (stateCurrent state + 1)
+                      (stateSource state)
+                    )
+                }
+        )
+    _ -> tokenizeString $ state { stateCurrent = stateCurrent state + 1 }
 
 
 eatComment :: TokenizerState -> TokenizerState
