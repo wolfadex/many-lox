@@ -60,8 +60,8 @@ data Error = Error
   }
 
 
-error :: Int -> String -> Error
-error line message =
+loxError :: Int -> String -> Error
+loxError line message =
     Error {errLine = line, errMessage = message}
     
 
@@ -176,6 +176,93 @@ tokenToString token =
     ( type_, Just literal ) -> type_ <> " " <> tokLexeme token <> " " <> literal
 
 
+data TokenizerState = TokenizerState
+  { stateCurrent :: Int
+  , stateStart :: Int
+  , stateSource :: String
+  , stateLine :: Int
+  }
+
+
 scanTokens :: String -> Either [Error] [Token]
 scanTokens source =
-    Right [Token (IDENTIFIER source) 1 "carl"]
+  scanTokensHelper
+    (TokenizerState
+      { stateCurrent = 0
+      , stateStart = 0
+      , stateSource = source
+      , stateLine = 1
+      }
+    )
+    []
+    []
+
+
+scanTokensHelper :: TokenizerState -> [Token] -> [Error] -> Either [Error] [Token]
+scanTokensHelper state tokens errors =
+  if isAtEnd state then
+    case errors of
+      [] ->
+        Right $
+          List.reverse
+            (Token
+              { tokType = EOF
+              , tokLine = stateLine state
+              , tokLexeme = ""
+              }
+              : tokens
+            )
+      _ -> Left $ List.reverse errors
+  else
+    case scanToken (state { stateStart = stateCurrent state }) of
+      ( nextState, Left err ) -> scanTokensHelper nextState tokens (err : errors)
+      ( nextState, Right (Just token) ) -> scanTokensHelper nextState (token : tokens) errors
+      ( nextState, Right Nothing ) -> scanTokensHelper nextState tokens errors
+
+
+scanToken :: TokenizerState -> ( TokenizerState, Either Error (Maybe Token) )
+scanToken state =
+  case drop (stateCurrent state) (stateSource state) of
+    [] ->
+      ( nextState
+      , Left $
+          loxError
+            (stateLine state)
+            ("Expected to find a char at " <> show (stateCurrent state) <> " index but found nothing.")  
+      )
+    
+    '(':_ -> addToken LEFT_PAREN
+    ')':_ -> addToken RIGHT_PAREN
+    '{':_ -> addToken LEFT_BRACE
+    '}':_ -> addToken RIGHT_BRACE
+    ',':_ -> addToken COMMA
+    '.':_ -> addToken DOT
+    '-':_ -> addToken MINUS
+    '+':_ -> addToken PLUS
+    ';':_ -> addToken SEMICOLON
+    '*':_ -> addToken STAR
+  where
+    nextState = state { stateCurrent = stateCurrent state + 1 }
+    addToken type_ =
+      ( nextState
+      , Right $
+          Just $
+            Token { tokType = type_
+                  , tokLine = stateLine nextState
+                  , tokLexeme =
+                    slice
+                      (stateStart nextState)
+                      (stateCurrent nextState)
+                      (stateSource nextState)
+                  }      
+      )
+
+
+slice :: Int -> Int -> [a] -> [a]
+slice dropUntilIndex takeUntilIndex list =
+  take (takeUntilIndex - dropUntilIndex) $ drop dropUntilIndex list
+
+
+isAtEnd :: TokenizerState -> Bool
+isAtEnd state =
+  stateCurrent state >= List.length (stateSource state)
